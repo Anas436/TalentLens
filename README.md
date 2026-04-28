@@ -217,7 +217,7 @@ The system handles failures gracefully:
 ## 📁 Project Structure
 
 ```
-resume/
+TalentLens/
 ├── manage.py                # Django entry point
 ├── requirements.txt         # Dependencies
 ├── .env                     # Environment config
