@@ -1,6 +1,6 @@
 # 🤖 [TalentLens] An AI Resume Screening System
 
-An intelligent, multi-agent system that evaluates resumes against job descriptions using specialized AI agents that collaborate via a LangGraph workflow. It has been built with Django, REST API, TailwindCSS, and JavaScript.
+An intelligent, multi-agent system that evaluates resumes against job descriptions using specialized AI agents that collaborate via a LangGraph workflow. It has been built with Django, REST API, JavaScript, and Tailwind CSS.
 
 ## ▶️ Project Demo
 
