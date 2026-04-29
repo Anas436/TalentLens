@@ -64,12 +64,10 @@
 
             <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg active:scale-95">
                 <span id="btn-text">Submit</span>
-                <div id="loading-spinner" class="hidden ml-2">
-                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </div>
+                <svg id="loading-spinner" class="hidden animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
             </button>
         </form>
 
@@ -256,7 +254,7 @@ document.getElementById('screening-form').addEventListener('submit', async funct
     
     submitBtn.disabled = true;
     submitBtn.classList.add('pulse-glow');
-    btnText.textContent = 'Screening...';
+    btnText.classList.add('hidden');
     loadingSpinner.classList.remove('hidden');
     
     document.getElementById('results-section').classList.add('hidden');
@@ -293,7 +291,7 @@ document.getElementById('screening-form').addEventListener('submit', async funct
     } finally {
         submitBtn.disabled = false;
         submitBtn.classList.remove('pulse-glow');
-        btnText.textContent = 'Screen Resume';
+        btnText.classList.remove('hidden');
         loadingSpinner.classList.add('hidden');
     }
 });
