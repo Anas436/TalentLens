@@ -77,27 +77,34 @@ def logout_view(request):
 @require_http_methods(["POST"])
 def screen_resume(request):
     """Handle resume screening request."""
-    form = ScreeningForm(request.POST, request.FILES)
-    
-    if not form.is_valid():
-        return JsonResponse({
-            'success': False,
-            'error': 'Invalid form submission',
-            'details': form.errors
-        }, status=400)
-    
-    resume_file = request.FILES['resume']
-    job_description = form.cleaned_data['job_description']
-    
-    with tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=Path(resume_file.name).suffix
-    ) as tmp_file:
-        for chunk in resume_file.chunks():
-            tmp_file.write(chunk)
-        tmp_path = tmp_file.name
-    
+    tmp_path = None
     try:
+        form = ScreeningForm(request.POST, request.FILES)
+        
+        if not form.is_valid():
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid form submission',
+                'details': form.errors
+            }, status=400)
+        
+        resume_file = request.FILES.get('resume')
+        if not resume_file:
+            return JsonResponse({
+                'success': False,
+                'error': 'No resume file uploaded'
+            }, status=400)
+        
+        job_description = form.cleaned_data['job_description']
+        
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=Path(resume_file.name).suffix
+        ) as tmp_file:
+            for chunk in resume_file.chunks():
+                tmp_file.write(chunk)
+            tmp_path = tmp_file.name
+        
         result = asyncio.run(run_screening_async(tmp_path, job_description))
         
         return JsonResponse({
@@ -115,11 +122,15 @@ def screen_resume(request):
         })
     
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Resume screening error:\n{error_trace}")
+        
         return JsonResponse({
             'success': False,
-            'error': str(e)
+            'error': f'Screening failed: {str(e)}'
         }, status=500)
     
     finally:
-        if os.path.exists(tmp_path):
+        if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
