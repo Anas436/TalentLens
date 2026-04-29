@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}TalentLens{% endblock %}
+
+{% block extra_css %}
+<style>
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.6); }
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    @keyframes slide-up {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-float { animation: float 3s ease-in-out infinite; }
+    .animate-slide-up { animation: slide-up 0.5s ease-out forwards; }
+    .drag-active { border-color: #6366f1 !important; background-color: #eef2ff !important; }
+    .file-preview { animation: slide-up 0.3s ease-out; }
+    textarea:focus { box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white shadow-lg rounded-xl p-6 md:p-8">
+        <form id="screening-form" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Upload Resume</label>
+                <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center transition-all duration-300 cursor-pointer hover:border-indigo-400 hover:bg-gray-50">
+                    <input type="file" id="id_resume" name="resume" accept=".pdf,.docx,.txt" class="hidden">
+                    <div id="upload-prompt">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                        <p class="text-gray-600 font-medium">Drop your resume here or <span class="text-indigo-600">browse</span></p>
+                        <p class="text-sm text-gray-500 mt-1">Supported: PDF, DOCX, TXT</p>
+                    </div>
+                    <div id="file-preview" class="hidden">
+                        <div class="flex items-center justify-center space-x-3">
+                            <i id="file-icon" class="fas fa-file-pdf text-3xl text-red-500"></i>
+                            <div class="text-left">
+                                <p id="file-name" class="font-medium text-gray-800"></p>
+                                <p id="file-size" class="text-sm text-gray-500"></p>
+                            </div>
+                            <button type="button" id="remove-file" class="ml-3 text-gray-400 hover:text-red-500 transition-colors">
+                                <i class="fas fa-times-circle text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Job Description</label>
+                    <span id="char-count" class="text-xs text-gray-500">0 characters</span>
+                </div>
+                <textarea id="id_job_description" name="job_description" rows="6" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" placeholder="Paste the job description here..."></textarea>
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg active:scale-95">
+                <span id="btn-text">Submit</span>
+                <div id="loading-spinner" class="hidden ml-2">
+                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </button>
+        </form>
+
+        <!-- Results Section -->
+        <div id="results-section" class="mt-8 hidden animate-slide-up">
+            <div class="border-t border-gray-200 pt-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Screening Results</h2>
+                
+                <!-- Match Score -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Match Score</span>
+                        <span id="match-score" class="text-2xl md:text-3xl font-bold"></span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div id="score-bar" class="h-3 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Recommendation -->
+                <div class="mb-4 p-4 rounded-lg" id="recommendation-box">
+                    <div class="flex items-center">
+                        <i id="rec-icon" class="fas fa-check-circle text-xl mr-3"></i>
+                        <div>
+                            <p class="font-medium" id="recommendation"></p>
+                            <p class="text-sm text-gray-600" id="confidence"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reasoning -->
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Reasoning</h3>
+                    <p id="reasoning" class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg"></p>
+                </div>
+
+                <!-- Analysis Sections -->
+                <div id="analysis-sections" class="space-y-4">
+                    <div id="skills-analysis-section" class="hidden">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Skills Analysis</h3>
+                        <pre id="skills-analysis" class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg whitespace-pre-wrap font-mono"></pre>
+                    </div>
+                    
+                    <div id="experience-analysis-section" class="hidden">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Experience Analysis</h3>
+                        <pre id="experience-analysis" class="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg whitespace-pre-wrap font-mono"></pre>
+                    </div>
+                </div>
+
+                <!-- Flags -->
+                <div id="flags-section" class="hidden mt-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Flags</h3>
+                    <ul id="flags-list" class="list-disc list-inside text-sm text-yellow-700 bg-yellow-50 p-4 rounded-lg"></ul>
+                </div>
+
+                <!-- Try Another -->
+                <div class="mt-6 text-center">
+                    <button onclick="resetForm()" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors">
+                        <i class="fas fa-redo mr-1"></i> Screen Another Resume
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Section -->
+        <div id="error-section" class="mt-6 hidden animate-slide-up">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-circle text-red-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="font-medium text-red-800">Error</p>
+                        <p id="error-message" class="text-sm text-red-600"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function resetForm() {
+    document.getElementById('screening-form').reset();
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('error-section').classList.add('hidden');
+    resetFileUpload();
+    document.getElementById('char-count').textContent = '0 characters';
+}
+
+function resetFileUpload() {
+    document.getElementById('upload-prompt').classList.remove('hidden');
+    document.getElementById('file-preview').classList.add('hidden');
+    document.getElementById('id_resume').value = '';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    const icons = {
+        'pdf': 'fa-file-pdf text-red-500',
+        'docx': 'fa-file-word text-blue-500',
+        'doc': 'fa-file-word text-blue-500',
+        'txt': 'fa-file-alt text-gray-500'
+    };
+    return icons[ext] || 'fa-file-alt text-gray-500';
+}
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('id_resume');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-active');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-active');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-active');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        handleFileSelect(files[0]);
+    }
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFileSelect(e.target.files[0]);
+    }
+});
+
+function handleFileSelect(file) {
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    const validExtensions = ['pdf', 'docx', 'txt'];
+    const ext = file.name.split('.').pop().toLowerCase();
+    
+    if (!validExtensions.includes(ext)) {
+        showError('Invalid file type. Please upload PDF, DOCX, or TXT files.');
+        return;
+    }
+    
+    document.getElementById('upload-prompt').classList.add('hidden');
+    document.getElementById('file-preview').classList.remove('hidden');
+    document.getElementById('file-preview').classList.add('file-preview');
+    
+    const iconClass = getFileIcon(file.name);
+    document.getElementById('file-icon').className = 'fas ' + iconClass + ' text-3xl';
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-size').textContent = formatFileSize(file.size);
+}
+
+document.getElementById('remove-file').addEventListener('click', (e) => {
+    e.stopPropagation();
+    resetFileUpload();
+});
+
+const jobDescTextarea = document.getElementById('id_job_description');
+const charCount = document.getElementById('char-count');
+
+jobDescTextarea.addEventListener('input', () => {
+    const count = jobDescTextarea.value.length;
+    charCount.textContent = count + ' character' + (count !== 1 ? 's' : '');
+    charCount.className = count > 0 ? 'text-xs text-indigo-600 font-medium' : 'text-xs text-gray-500';
+});
+
+document.getElementById('screening-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    
+    submitBtn.disabled = true;
+    submitBtn.classList.add('pulse-glow');
+    btnText.textContent = 'Screening...';
+    loadingSpinner.classList.remove('hidden');
+    
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('error-section').classList.add('hidden');
+    
+    const formData = new FormData(this);
+    
+    try {
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const response = await fetch('{% url "core:screen_resume" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displayResults(data.result);
+        } else {
+            showError(data.error || 'An error occurred');
+        }
+    } catch (err) {
+        showError(err.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('pulse-glow');
+        btnText.textContent = 'Screen Resume';
+        loadingSpinner.classList.add('hidden');
+    }
+});
+
+function displayResults(result) {
+    const score = result.match_score;
+    const scorePercent = (score * 100).toFixed(0) + '%';
+    
+    document.getElementById('match-score').textContent = scorePercent;
+    document.getElementById('match-score').className = 'text-2xl md:text-3xl font-bold ' + getScoreColorClass(score);
+    
+    const scoreBar = document.getElementById('score-bar');
+    setTimeout(() => {
+        scoreBar.style.width = scorePercent;
+    }, 100);
+    scoreBar.className = 'h-3 rounded-full transition-all duration-700 ease-out ' + getScoreColorClass(score).replace('text-', 'bg-');
+    
+    const recBox = document.getElementById('recommendation-box');
+    recBox.className = 'mb-4 p-4 rounded-lg ' + getRecBoxColorClass(score);
+    
+    const recIcon = document.getElementById('rec-icon');
+    recIcon.className = 'fas fa-' + (score >= 0.5 ? 'check-circle' : 'times-circle') + ' text-xl mr-3 ' + getScoreColorClass(score);
+    
+    document.getElementById('recommendation').textContent = result.recommendation;
+    document.getElementById('recommendation').className = 'font-medium ' + getScoreColorClass(score);
+    document.getElementById('confidence').textContent = 'Confidence: ' + (result.confidence * 100).toFixed(0) + '%';
+    document.getElementById('reasoning').textContent = result.reasoning_summary;
+    
+    if (result.skills_analysis) {
+        document.getElementById('skills-analysis-section').classList.remove('hidden');
+        document.getElementById('skills-analysis').textContent = result.skills_analysis;
+    } else {
+        document.getElementById('skills-analysis-section').classList.add('hidden');
+    }
+    
+    if (result.experience_analysis) {
+        document.getElementById('experience-analysis-section').classList.remove('hidden');
+        document.getElementById('experience-analysis').textContent = result.experience_analysis;
+    } else {
+        document.getElementById('experience-analysis-section').classList.add('hidden');
+    }
+    
+    if (result.flags && result.flags.length > 0) {
+        document.getElementById('flags-section').classList.remove('hidden');
+        document.getElementById('flags-list').innerHTML = result.flags.map(f => '<li>' + f + '</li>').join('');
+    } else {
+        document.getElementById('flags-section').classList.add('hidden');
+    }
+    
+    document.getElementById('results-section').classList.remove('hidden');
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showError(message) {
+    document.getElementById('error-message').textContent = message;
+    document.getElementById('error-section').classList.remove('hidden');
+    document.getElementById('error-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function getScoreColorClass(score) {
+    if (score >= 0.7) return 'text-green-600';
+    if (score >= 0.4) return 'text-yellow-600';
+    return 'text-red-600';
+}
+
+function getRecBoxColorClass(score) {
+    if (score >= 0.7) return 'bg-green-50 border border-green-200';
+    if (score >= 0.4) return 'bg-yellow-50 border border-yellow-200';
+    return 'bg-red-50 border border-red-200';
+}
+</script>
+{% endblock %}
