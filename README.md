@@ -2,11 +2,14 @@
 
 An intelligent, multi-agent system that evaluates resumes against job descriptions using specialized AI agents that collaborate via a LangGraph workflow. It has been built with Django, REST API, TailwindCSS, and JavaScript.
 
+## ▶️ Project Demo
+
 <p align="center">
   <a href="https://drive.google.com/file/d/1pyE434wTlETYoYvfI9d3AZCW8xUjA6Hf/view?usp=sharing">
     <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg" alt="Watch the video">
   </a>
 </p>
+
 
 ## 🎯 Overview
 
@@ -18,7 +21,7 @@ This system takes a resume (PDF, DOCX, or TXT) and a job description, then produ
 - **LangGraph Orchestration**: Parallel execution where possible, with convergence for decision making
 - **Structured Reasoning**: Every decision includes explainable reasoning
 - **Human-in-the-Loop**: Automatic flagging of uncertain cases for human review
-- **Error Handling**: Graceful degradation when parsing fails or data is incomplete
+- **Error Handling**: Graceful degradation when parsing fails or data is 
 
 ## 🏗️ Architecture
 
