@@ -15,8 +15,22 @@ from django.contrib.auth import login, authenticate, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from functools import wraps
 
 from .forms import ScreeningForm
+
+
+def login_required_json(view_func):
+    """Decorator that returns JSON error for unauthenticated AJAX requests."""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': 'Authentication required. Please log in.'
+            }, status=401)
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 async def run_screening_async(resume_path: str, job_description: str):
@@ -59,7 +73,7 @@ def logout_view(request):
     return redirect('core:login')
 
 
-@login_required
+@login_required_json
 @require_http_methods(["POST"])
 def screen_resume(request):
     """Handle resume screening request."""
