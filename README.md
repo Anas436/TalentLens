@@ -2,8 +2,11 @@
 
 An intelligent, multi-agent system that evaluates resumes against job descriptions using specialized AI agents that collaborate via a LangGraph workflow. It has been built with Django, REST API, TailwindCSS, and JavaScript.
 
-<video src="https://raw.githubusercontent.com/Anas436/TalentLens/main/TalentLens-demo.mp4" controls="controls" muted="muted" style="max-width: 100%;" autoplay="autoplay" loop="loop">
+
+<video src="TalentLens-demo.mp4" controls="controls" muted="muted" style="max-width: 100%;" autoplay="autoplay" loop="loop">
+  Your browser does not support the video tag.
 </video>
+
 
 ## 🎯 Overview
 
