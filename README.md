@@ -6,10 +6,11 @@ An intelligent, multi-agent system that evaluates resumes against job descriptio
 
 <p align="center">
   <a href="https://drive.google.com/file/d/1pyE434wTlETYoYvfI9d3AZCW8xUjA6Hf/view?usp=sharing">
-    <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg" alt="Watch the video">
+    <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg" width="400">
+    <br>
+    <img src="https://img.shields.io/badge/Video-Play_Demo-red?style=for-the-badge&logo=youtube&logoColor=white">
   </a>
 </p>
-
 
 ## 🎯 Overview
 
