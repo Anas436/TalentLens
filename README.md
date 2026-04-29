@@ -2,6 +2,8 @@
 
 An intelligent, multi-agent system that evaluates resumes against job descriptions using specialized AI agents that collaborate via a LangGraph workflow. It has been built with Django, REST API, TailwindCSS, and JavaScript.
 
+![](https://github.com/Anas436/TalentLens/blob/main/TalentLens-demo.mp4)
+
 ## 🎯 Overview
 
 This system takes a resume (PDF, DOCX, or TXT) and a job description, then produces a structured recommendation about whether the candidate should proceed to an interview. Unlike simple keyword matching or single-prompt approaches, this system uses **multiple specialized agents** that each handle a specific aspect of the evaluation and pass structured data to each other.
